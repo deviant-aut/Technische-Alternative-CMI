@@ -55,13 +55,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
+    
+    # noblocking test:
+    # await coordinator.async_config_entry_first_refresh()
+    # hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    # await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # new async to wait for cmi
+    hass.async_create_task(async_finish_setup(hass, entry, coordinator))
+
+    return True
+
+async def async_finish_setup(hass: HomeAssistant, entry: ConfigEntry, coordinator: CMIDataUpdateCoordinator) -> None:
+    """Finish the setup after the first data update."""
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
